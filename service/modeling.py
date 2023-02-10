@@ -4,9 +4,8 @@ class Modeling():
 
     def __init__(self):
         colnames=['NOME', "DIA", "TURMA/PROFESSOR", "HORARIO"]
-        data = pd.read_csv("database/ucs.csv", encoding="utf-8", sep=";", names=colnames, header=None)
-
-        self.ucs = pd.DataFrame(data)
+        self.ucs = pd.DataFrame(pd.read_csv("database/ucs.csv", encoding="utf-8", sep=";", names=colnames, header=None))
+        self.prof = pd.DataFrame(pd.read_csv("database/prof.csv", sep=","))
 
         self.ucs = self.ucs[self.ucs["NOME"] != " "]
 
@@ -37,11 +36,48 @@ class Modeling():
         return df.groupby(["ID", "NOME", "TURMA", "PROFESSORES"], as_index=False).\
         agg({"DIA":lambda x: list(x), "HORARIO":lambda x: list(x)})
 
+    def _prof_data(prof, data):
+
+        prof_list = data.groupby(["PROFESSORES"],as_index=False).count()[["PROFESSORES"]]
+        prof_list[["PROF1", "PROF2"]] = prof_list["PROFESSORES"].str.split("/", expand=True)
+
+        prof_list["PROF1"]=prof_list["PROF1"].str.strip()
+        prof_list["PROF2"]=prof_list["PROF2"].str.strip()
+
+        prof1 = list(prof_list.loc[(~prof_list["PROF1"].isnull()) & (prof_list["PROF1"] != "None"), "PROF1"].str.upper().unique())
+        prof2 = list(prof_list.loc[(~prof_list["PROF2"].isnull())  & (prof_list["PROF2"] != "None"), "PROF2"].str.upper().unique())
+        
+        prof1+=[name for name in prof2 if not name in prof1]
+
+        result = []
+        for name in [name.split(' ') for name in prof1]:
+            if len(name) > 1: 
+                filter_data = prof[(prof["DOCENTE RESPONSAVEL"].str.contains(name[0])) &
+                            (prof["DOCENTE RESPONSAVEL"].str.contains(name[1]))]
+
+            else: filter_data = prof[prof["DOCENTE RESPONSAVEL"].str.contains(name[0])]
+            
+            group_data = filter_data.groupby("DOCENTE RESPONSAVEL", as_index=False).\
+                                    agg({"NOME DA UC": lambda x: list(x), "APROVADOS" : lambda x: list(x), 
+                                        "REPROVADOS": lambda x: list(x), "TOTAL": lambda x: list(x)})
+
+            result += Modeling._df_to_dict(group_data)
+        
+        return result
+
     def get_ucs(self):
         return Modeling._df_to_dict(Modeling._group_by(self.ucs))
 
     def uc_analizer(self, data):
         sub_ucs = self.ucs.loc[self.ucs["ID"].isin(data), ["DIA", "HORARIO"]]
         sub_ucs = self.ucs.merge(sub_ucs, how='outer', indicator=True)
-        result = sub_ucs.loc[sub_ucs["_merge"] == "both", "ID"].unique()
-        return Modeling._df_to_dict(Modeling._group_by(self.ucs[~self.ucs["ID"].isin(result)]))
+        
+        list_result = sub_ucs.loc[sub_ucs["_merge"] == "both", "ID"].unique()
+        pre_result = self.ucs[~self.ucs["ID"].isin(list_result)]
+
+        result={}
+        result["PROFS"] = Modeling._prof_data(self.prof, pre_result)
+        result["UCS"] = Modeling._df_to_dict(Modeling._group_by(pre_result))
+
+        return result
+
