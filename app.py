@@ -11,15 +11,18 @@ CORS(app)
 class Grade():
 
     @app.route("/disciplinas", methods=['GET'])
+    @crossdomain(origin="*")
     def get():
         return ucs.get_ucs()
 
     @app.route("/disciplinas", methods=['POST'])
+    @crossdomain(origin="*")
     def post_uc():
         data = request.get_json()
         return ucs.uc_analizer(data['items'])
 
     @app.route("/prof", methods=['POST'])
+    @crossdomain(origin="*")
     def post_prof():
         data = request.get_json()
         return ucs.prof_analizer(data['items'])
