@@ -6,6 +6,7 @@ import os
 
 app = Flask(__name__)
 
+
 CORS(app, origins=['https://montador-de-grades-upfpc35ezq-uc.a.run.app'])
 
 ucs = Modeling()
