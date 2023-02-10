@@ -1,12 +1,14 @@
 from flask import Flask, request
 from service.modeling import Modeling
 from flask_cors import CORS
-from flask_cors import cross_origin
 import os
 
 app = Flask(__name__)
+
+
+CORS(app, origins=['https://montador-de-grades-upfpc35ezq-uc.a.run.app'])
+
 ucs = Modeling()
-CORS(app)
 
 class Grade():
 
@@ -19,7 +21,7 @@ class Grade():
         data = request.get_json()
         return ucs.uc_analizer(data['items'])
 
-    @app.route("/prof", methods=['POST'])
+    @app.route("/disciplinas/prof", methods=['POST'])
     def post_prof():
         data = request.get_json()
         return ucs.prof_analizer(data['items'])
