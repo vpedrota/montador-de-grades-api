@@ -60,6 +60,7 @@ class Modeling():
         return Modeling._df_to_dict(Modeling._group_by(self.ucs))
 
     def uc_analizer(self, data):
+        data = self.ucs.loc[self.ucs["ID"].isin(data), "NOME"].unique()
         sub_ucs = self.ucs.loc[self.ucs["ID"].isin(data), ["DIA", "HORARIO"]]
         sub_ucs = self.ucs.merge(sub_ucs, how='outer', indicator=True)
         
@@ -67,4 +68,3 @@ class Modeling():
         pre_result = self.ucs[~self.ucs["ID"].isin(list_result)]
 
         return Modeling._df_to_dict(Modeling._group_by(pre_result))
-
