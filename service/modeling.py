@@ -14,6 +14,7 @@ class Modeling():
         self.ucs["TURMA"] = self.ucs["TURMA/PROFESSOR"].str[0].str.strip()
 
         self.ucs["PROFESSORES"] = self.ucs["TURMA/PROFESSOR"].str[1].str.replace(" / ", "/").str.strip()
+        self.ucs["NOME"] = self.ucs["NOME"].str.strip()
 
         self.ucs["HORARIO"] = self.ucs["HORARIO"].str.replace(" - ", "-").str.strip()
         self.ucs.loc[self.ucs["HORARIO"].str.contains("8h00-10h00"), "HORARIO"] = "0" + self.ucs.loc[self.ucs["HORARIO"].str.contains("8h00-10h00"), "HORARIO"].astype(str)
