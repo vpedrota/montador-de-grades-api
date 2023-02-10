@@ -36,34 +36,25 @@ class Modeling():
         return df.groupby(["ID", "NOME", "TURMA", "PROFESSORES"], as_index=False).\
         agg({"DIA":lambda x: list(x), "HORARIO":lambda x: list(x)})
 
-    def _prof_data(prof, data):
+    def prof_analizer(self, data):
 
-        prof_list = data.groupby(["PROFESSORES"],as_index=False).count()[["PROFESSORES"]]
-        prof_list[["PROF1", "PROF2"]] = prof_list["PROFESSORES"].str.split("/", expand=True)
-
-        prof_list["PROF1"]=prof_list["PROF1"].str.strip()
-        prof_list["PROF2"]=prof_list["PROF2"].str.strip()
-
-        prof1 = list(prof_list.loc[(~prof_list["PROF1"].isnull()) & (prof_list["PROF1"] != "None"), "PROF1"].str.upper().unique())
-        prof2 = list(prof_list.loc[(~prof_list["PROF2"].isnull())  & (prof_list["PROF2"] != "None"), "PROF2"].str.upper().unique())
+        prof_list = list(self.ucs.loc[self.ucs["ID"].isin(data), "PROFESSORES"].unique())
+        prof_list = [prof_list[0].upper()]
         
-        prof1+=[name for name in prof2 if not name in prof1]
+        if "/" in prof_list[0]:
+            prof_list = prof_list[0].split("/")
 
-        result = []
-        for name in [name.split(' ') for name in prof1]:
-            if len(name) > 1: 
-                filter_data = prof[(prof["DOCENTE RESPONSAVEL"].str.contains(name[0])) &
-                            (prof["DOCENTE RESPONSAVEL"].str.contains(name[1]))]
+        if len(prof_list) > 1: 
+            filter_data = self.prof[(self.prof["DOCENTE RESPONSAVEL"].str.contains(prof_list[0])) &
+                        (self.prof["DOCENTE RESPONSAVEL"].str.contains(prof_list[1]))]
 
-            else: filter_data = prof[prof["DOCENTE RESPONSAVEL"].str.contains(name[0])]
-            
-            group_data = filter_data.groupby("DOCENTE RESPONSAVEL", as_index=False).\
-                                    agg({"NOME DA UC": lambda x: list(x), "APROVADOS" : lambda x: list(x), 
-                                        "REPROVADOS": lambda x: list(x), "TOTAL": lambda x: list(x)})
-
-            result += Modeling._df_to_dict(group_data)
+        else: filter_data = self.prof[self.prof["DOCENTE RESPONSAVEL"].str.contains(prof_list[0])]
         
-        return result
+        group_data = filter_data.groupby("DOCENTE RESPONSAVEL", as_index=False).\
+                                agg({"NOME DA UC": lambda x: list(x), "APROVADOS" : lambda x: list(x), 
+                                    "REPROVADOS": lambda x: list(x), "TOTAL": lambda x: list(x)})
+        
+        return Modeling._df_to_dict(group_data)
 
     def get_ucs(self):
         return Modeling._df_to_dict(Modeling._group_by(self.ucs))
@@ -75,9 +66,5 @@ class Modeling():
         list_result = sub_ucs.loc[sub_ucs["_merge"] == "both", "ID"].unique()
         pre_result = self.ucs[~self.ucs["ID"].isin(list_result)]
 
-        result={}
-        result["PROFS"] = Modeling._prof_data(self.prof, pre_result)
-        result["UCS"] = Modeling._df_to_dict(Modeling._group_by(pre_result))
-
-        return result
+        return Modeling._df_to_dict(Modeling._group_by(pre_result))
 
