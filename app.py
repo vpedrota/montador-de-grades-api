@@ -5,24 +5,27 @@ from flask_cors import cross_origin
 import os
 
 app = Flask(__name__)
+app.config['CORS_HEADERS'] = 'Content-Type'
+
+CORS(app, resources={r"/disciplinas": {"origins": "*"},
+                    r"/prof": {"origins": "*"}})
 ucs = Modeling()
-CORS(app)
 
 class Grade():
 
     @app.route("/disciplinas", methods=['GET'])
-    @cross_origin()
+    @cross_origin(origin='*',headers=['Content- Type','Authorization'])
     def get():
         return ucs.get_ucs()
 
     @app.route("/disciplinas", methods=['POST'])
-    @cross_origin()
+    @cross_origin(origin='*',headers=['Content- Type','Authorization'])
     def post_uc():
         data = request.get_json()
         return ucs.uc_analizer(data['items'])
 
     @app.route("/prof", methods=['POST'])
-    @cross_origin()
+    @cross_origin(origin='*',headers=['Content- Type','Authorization'])
     def post_prof():
         data = request.get_json()
         return ucs.prof_analizer(data['items'])
