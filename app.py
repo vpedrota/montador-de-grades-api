@@ -1,12 +1,9 @@
 from flask import Flask, request
 from service.modeling import Modeling
-from flask_cors import CORS
-from flask_cors import cross_origin
 import os
 
 app = Flask(__name__)
 ucs = Modeling()
-CORS(app)
 
 class Grade():
 
