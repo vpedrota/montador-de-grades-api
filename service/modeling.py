@@ -61,7 +61,7 @@ class Modeling():
 
     def uc_analizer(self, data):
         data = self.ucs.loc[self.ucs["ID"].isin(data), "NOME"].unique()
-        sub_ucs = self.ucs.loc[self.ucs["ID"].isin(data), ["DIA", "HORARIO"]]
+        sub_ucs = self.ucs.loc[self.ucs["NOME"].str.contains(data[0]), ["DIA", "HORARIO"]]
         sub_ucs = self.ucs.merge(sub_ucs, how='outer', indicator=True)
         
         list_result = sub_ucs.loc[sub_ucs["_merge"] == "both", "ID"].unique()
