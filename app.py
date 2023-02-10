@@ -6,7 +6,7 @@ import os
 
 app = Flask(__name__)
 
-CORS(app, resources={r'https://montador-de-grades-api-upfpc35ezq-uc.a.run.app/disciplinas/*': {'origin': '*'}})
+CORS(app, resources={r'/disciplinas/*': {'origin': '*'}})
 ucs = Modeling()
 
 class Grade():
