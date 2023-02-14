@@ -7,12 +7,6 @@ class Modeling():
 
     def __init__(self):
 
-        # Carregar a chave do formato JSON
-        key_file_path = 'credenciais.json'
-
-        # Autenticar com a chave do formato JSON
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = key_file_path
-
         bucket_name = 'arquivos-api'
         blob_name = 'ucs.csv'
         local_filename = 'ucs.csv'
