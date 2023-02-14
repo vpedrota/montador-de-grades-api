@@ -21,6 +21,7 @@ class Grade():
         data = request.get_json()
         return ucs.uc_analizer(data['items'])
 
+
     @app.route("/disciplinas/prof", methods=['POST'])
     def post_prof():
         data = request.get_json()
