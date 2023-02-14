@@ -15,7 +15,7 @@ class Modeling():
 
         bucket_name = 'arquivos-api'
         blob_name = 'ucs.csv'
-        local_filename = 'database/ucs.csv'
+        local_filename = 'ucs.csv'
 
         client = storage.Client()
 
@@ -23,7 +23,7 @@ class Modeling():
         blob = bucket.blob(blob_name)
         blob.download_to_filename(local_filename)
 
-        self.ucs = pd.DataFrame(pd.read_csv("database/ucs.csv", encoding="utf-8", sep=";"))
+        self.ucs = pd.DataFrame(pd.read_csv("ucs.csv", encoding="utf-8", sep=";"))
         # self.prof = pd.DataFrame(pd.read_csv("database/rate.csv", sep=","))
 
         self.ucs = self.ucs[self.ucs["NOME"] != " "]
