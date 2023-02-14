@@ -1,11 +1,30 @@
+import os
 import pandas as pd
+
+from google.cloud import storage
 
 class Modeling():
 
     def __init__(self):
-        colnames=['NOME', "DIA", "TURMA/PROFESSOR", "HORARIO"]
-        self.ucs = pd.DataFrame(pd.read_csv("database/ucs.csv", encoding="utf-8", sep=";", names=colnames, header=None))
-        self.rate = None
+
+        # Carregar a chave do formato JSON
+        key_file_path = 'credenciais.json'
+
+        # Autenticar com a chave do formato JSON
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = key_file_path
+
+        bucket_name = 'arquivos-api'
+        blob_name = 'ucs.csv'
+        local_filename = 'database/ucs.csv'
+
+        client = storage.Client()
+
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+        blob.download_to_filename(local_filename)
+
+        self.ucs = pd.DataFrame(pd.read_csv("database/ucs.csv", encoding="utf-8", sep=";"))
+        # self.prof = pd.DataFrame(pd.read_csv("database/rate.csv", sep=","))
 
         self.ucs = self.ucs[self.ucs["NOME"] != " "]
 
@@ -37,32 +56,25 @@ class Modeling():
         return df.groupby(["ID", "NOME", "TURMA", "PROFESSORES"], as_index=False).\
         agg({"DIA":lambda x: list(x), "HORARIO":lambda x: list(x)})
 
-    def get_rate(self, data):
+    def prof_analizer(self, data):
 
         prof_list = list(self.ucs.loc[self.ucs["ID"].isin(data), "PROFESSORES"].unique())
-        prof_list[0] = prof_list[0].upper()
+        prof_list = [prof_list[0].upper()]
         
         if "/" in prof_list[0]:
             prof_list = prof_list[0].split("/")
 
-        name_prof = []
-        for name in prof_list:
-            name_prof.append(list(name.split(' ')))
+        if len(prof_list) > 1: 
+            filter_data = self.prof[(self.prof["DOCENTE RESPONSAVEL"].str.contains(prof_list[0])) &
+                        (self.prof["DOCENTE RESPONSAVEL"].str.contains(prof_list[1]))]
 
-        df_list = []
-        for name in name_prof:
-            if len(name) > 1: 
-                filter_data = self.rate[(self.rate["DOCENTE RESPONSAVEL"].str.contains(name[0])) &
-                            (self.rate["DOCENTE RESPONSAVEL"].str.contains(name[1]))]
-
-            else: filter_data = self.rate[self.rate["DOCENTE RESPONSAVEL"].str.contains(name[0])]
+        else: filter_data = self.prof[self.prof["DOCENTE RESPONSAVEL"].str.contains(prof_list[0])]
         
-            df_list.append(filter_data.groupby("DOCENTE RESPONSAVEL", as_index=False).\
+        group_data = filter_data.groupby("DOCENTE RESPONSAVEL", as_index=False).\
                                 agg({"NOME DA UC": lambda x: list(x), "APROVADOS" : lambda x: list(x), 
-                                    "REPROVADOS": lambda x: list(x), "TOTAL": lambda x: list(x)}))
+                                    "REPROVADOS": lambda x: list(x), "TOTAL": lambda x: list(x)})
         
-        union_data = pd.concat(df_list)
-        return Modeling._df_to_dict(union_data)
+        return Modeling._df_to_dict(group_data)
 
     def get_ucs(self):
         return Modeling._df_to_dict(Modeling._group_by(self.ucs))
@@ -70,14 +82,12 @@ class Modeling():
     def uc_analizer(self, data):
         if not len(data): pre_result = self.ucs
         else:
-            sub_ucs = self.ucs.loc[self.ucs["ID"].isin(data), ["NOME", "DIA", "HORARIO"]]
-            uc_names = list(sub_ucs["NOME"].unique())
+            data = list(self.ucs.loc[self.ucs["ID"].isin(data), "NOME"].unique())
+            sub_ucs = self.ucs.loc[self.ucs["NOME"].isin(data), ["DIA", "HORARIO"]]
 
-            sub_ucs = self.ucs.merge(sub_ucs[["DIA", "HORARIO"]], how='outer', indicator=True)
-		 
-            list_result = list(sub_ucs.loc[sub_ucs["NOME"].isin(uc_names), "ID"].unique())
+            sub_ucs = self.ucs.merge(sub_ucs, how='outer', indicator=True)
             
-            list_result += list(sub_ucs.loc[sub_ucs["_merge"] == "both", "ID"].unique())
+            list_result = sub_ucs.loc[sub_ucs["_merge"] == "both", "ID"].unique()
             pre_result = self.ucs[~self.ucs["ID"].isin(list_result)]
 
         return Modeling._df_to_dict(Modeling._group_by(pre_result))

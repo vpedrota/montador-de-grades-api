@@ -21,10 +21,10 @@ class Grade():
         data = request.get_json()
         return ucs.uc_analizer(data['items'])
 
-    @app.route("/disciplinas/taxa", methods=['POST'])
-    def post_rate():
+    @app.route("/disciplinas/prof", methods=['POST'])
+    def post_prof():
         data = request.get_json()
-        return ucs.get_rate(data['items'])
+        return ucs.prof_analizer(data['items'])
 
 
 if __name__ == '__main__':
